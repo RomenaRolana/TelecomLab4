@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Дослідження згорткового коду</title>
+    <style>
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<h2>Дослідження циклічного надлишкового коду (CRC)</h2>
+<button onclick="generateAndDisplaySequences()">Генерувати та відобразити послідовності</button>
+<div id="results">
+    <!-- Тут будуть відображені результати -->
+</div>
+
+<script>
+    function generateRandomSequence(length) {
+        let sequence = '';
+        for (let i = 0; i < length; i++) {
+            sequence += Math.round(Math.random()).toString();  // Додає випадковий біт (0 або 1) до стрічки
+        }
+        return sequence;  // Повертає генеровану послідовність
+    }
+
+    function convolutionalEncode(input, rate, m, polynomial) {
+        const n = Math.ceil(1 / rate);  // Обчислення кількості вихідних символів на кожний вхідний
+        let output = '';  // Стрічка для зберігання кодованої послідовності
+        let shiftRegister = new Array(m).fill(0);  // Регістр зсуву, заповнений нулями
+
+        for (let i = 0; i < input.length; i++) {
+            shiftRegister.unshift(parseInt(input[i]));  // Додає новий біт у початок регістра
+            shiftRegister.pop();  // Видаляє останній біт, щоб підтримати розмір регістра
+
+            for (let j = 0; j < n; j++) {
+                let encodedBit = 0;
+                for (let k = 0; k < m; k++) {
+                    encodedBit ^= shiftRegister[k] & polynomial[j][k];  // XOR операція для обчислення кодованого біта
+                }
+                output += encodedBit.toString();  // Додає обчислений біт до вихідної стрічки
+            }
+        }
+
+        return output;  // Повертає кодовану послідовність
+    }
+
+    function generateAndDisplaySequences() {
+        const K = 1000;  // Довжина послідовності
+        const inputSequence = generateRandomSequence(K);  // Генерація вхідної послідовності
+        const rate = 0.5;  // Швидкість коду
+        const m = 4;  // Розмір регістра зсуву
+        const polynomial = [
+            [1, 1, 0, 1], // Поліном для G1 (13 у восьмеричній -> 1101 у двійковій)
+            [1, 0, 0, 0]  // Поліном для G2 (17 у восьмеричній -> 1000 у двійковій)
+        ];
+
+        const encodedSequence = convolutionalEncode(inputSequence, rate, m, polynomial);  // Кодування послідовності
+        document.getElementById('results').innerText = `Input: ${inputSequence}\nEncoded: ${encodedSequence}`;  // Відображення результатів
+    }
+</script>
+</body>
+</html>
